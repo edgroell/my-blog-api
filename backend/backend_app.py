@@ -10,8 +10,9 @@ POSTS = [
 ]
 
 
-def validate_post_data(new_post: dict):
+def validate_new_post_data(new_post: dict):
     errors = []
+
     if not new_post:
         errors.append("Request body cannot be empty.")
         return False, errors
@@ -22,13 +23,31 @@ def validate_post_data(new_post: dict):
         errors.append("Field 'content' is missing or empty.")
 
     if errors:
+
         return False, errors
+
+    return True, []
+
+
+def validate_update_post_data(new_data: dict):
+    errors = []
+
+    if "title" in new_data and not new_data["title"]:
+        errors.append("Field 'title' is empty.")
+    if "content" in new_data and not new_data["content"]:
+        errors.append("Field 'content' is empty.")
+
+    if errors:
+
+        return False, errors
+
     return True, []
 
 
 def find_post_by_id(id: int):
     for post in POSTS:
         if post["id"] == id:
+
             return post
 
 
@@ -39,9 +58,10 @@ def get_posts():
         new_post = request.get_json()
 
         # Validate new post content
-        is_valid, errors = validate_post_data(new_post)
+        is_valid, errors = validate_new_post_data(new_post)
 
         if not is_valid:
+
             return jsonify({"error(s)": errors}), 400
 
         # Generate new ID for the new post
@@ -58,20 +78,48 @@ def get_posts():
         return jsonify(POSTS)
 
 
-@app.route('/api/posts/<int:id>', methods=['DELETE'])
-def delete_post(id):
+@app.route('/api/posts/<int:id>', methods=['DELETE', 'PUT'])
+def handle_endpoint(id):
     # Find the post based on given ID
     post = find_post_by_id(id)
 
     # If not found, return 404 error
     if not post:
-        return jsonify({"error": f"No post with id {id} found."}), 404
 
+        return jsonify({"error": f"Post with id {id} not found."}), 404
+
+    if request.method == 'DELETE':
+
+        return delete_post(id, post)
+
+    if request.method == 'PUT':
+
+        return update_post(post)
+
+
+def delete_post(id, post):
     # Delete post
     POSTS.remove(post)
 
     # Return the deleted post
     return jsonify({"message": f"Post with id {id} has been deleted successfully."}), 200
+
+
+def update_post(post):
+    # Update post
+    new_data = request.get_json()
+
+    # Validate update post content
+    is_valid, errors = validate_update_post_data(new_data)
+    if not is_valid:
+
+        return jsonify({"error(s)": errors}), 400
+
+    # Update post
+    post.update(new_data)
+
+    # Return the updated post
+    return jsonify(post)
 
 
 if __name__ == '__main__':
