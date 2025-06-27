@@ -20,7 +20,7 @@
     "/posts": {
       "get": {
         "summary": "Retrieve all posts with optional sorting",
-        "description": "Returns a list of all posts. Can be sorted by 'title', 'content', or 'id' in 'asc' or 'desc' order.",
+        "description": "Returns a list of all posts. Can be sorted by 'id', 'title', 'content', 'author', or 'date' in 'asc' or 'desc' order.",
         "tags": [
           "Posts"
         ],
@@ -34,7 +34,9 @@
             "enum": [
               "id",
               "title",
-              "content"
+              "content",
+              "author",
+              "date"
             ]
           },
           {
@@ -72,7 +74,7 @@
       },
       "post": {
         "summary": "Create a new post",
-        "description": "Adds a new post to the collection.",
+        "description": "Adds a new post to the collection. Automatically assigns an ID and current date/time.",
         "tags": [
           "Posts"
         ],
@@ -101,7 +103,7 @@
             }
           },
           "400": {
-            "description": "Invalid input, e.g., missing title or content",
+            "description": "Invalid input, e.g., missing title, content, or author",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -112,7 +114,7 @@
     "/posts/{id}": {
       "put": {
         "summary": "Update an existing post",
-        "description": "Updates a post identified by its ID. At least 'title' or 'content' must be provided.",
+        "description": "Updates a post identified by its ID. Any provided fields (title, content, author) will be updated. The 'date' field is automatically set to the current time on update.",
         "tags": [
           "Posts"
         ],
@@ -134,7 +136,7 @@
           {
             "name": "post",
             "in": "body",
-            "description": "Updated post object",
+            "description": "Updated post object (partial updates are allowed)",
             "required": true,
             "schema": {
               "$ref": "#/definitions/UpdatePost"
@@ -149,7 +151,7 @@
             }
           },
           "400": {
-            "description": "Invalid input, e.g., empty title or content if provided",
+            "description": "Invalid input, e.g., empty title, content, or author if provided",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -206,7 +208,7 @@
     "/posts/search": {
       "get": {
         "summary": "Search for posts",
-        "description": "Searches posts by title and/or content (case-insensitive). Returns unique matching posts.",
+        "description": "Searches posts by title, content, author (case-insensitive), and/or exact date (YYYY-MM-DD). Returns unique matching posts.",
         "tags": [
           "Posts"
         ],
@@ -214,16 +216,31 @@
           {
             "name": "title",
             "in": "query",
-            "description": "Partial title to search for",
+            "description": "Partial title to search for (case-insensitive)",
             "required": false,
             "type": "string"
           },
           {
             "name": "content",
             "in": "query",
-            "description": "Partial content to search for",
+            "description": "Partial content to search for (case-insensitive)",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "description": "Partial author name to search for (case-insensitive)",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Exact date to search for (YYYY-MM-DD)",
+            "required": false,
+            "type": "string",
+            "format": "date"
           }
         ],
         "produces": [
@@ -250,66 +267,98 @@
         "id": {
           "type": "integer",
           "format": "int64",
+          "description": "Unique identifier for the post",
           "readOnly": true
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Title of the post"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Content of the post"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of the post"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation or last update date/time of the post (ISO 8601 format)",
+          "readOnly": true
         }
       },
       "example": {
         "id": 1,
         "title": "First post",
-        "content": "This is the first post."
+        "content": "This is the first post.",
+        "author": "Ed",
+        "date": "2025-06-27T16:10:09.000000Z"
       }
     },
     "NewPost": {
       "type": "object",
       "required": [
         "title",
-        "content"
+        "content",
+        "author"
       ],
       "properties": {
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Title of the new post"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Content of the new post"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of the new post"
         }
       },
       "example": {
-        "title": "My New Post",
-        "content": "This is the content of my new post."
+        "title": "My Brand New Post",
+        "content": "This is exciting new content!",
+        "author": "Ed"
       }
     },
     "UpdatePost": {
       "type": "object",
       "properties": {
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional new title for the post"
         },
         "content": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional new content for the post"
+        },
+        "author": {
+          "type": "string",
+          "description": "Optional new author for the post"
         }
       },
       "example": {
         "title": "Updated Title",
-        "content": "New content for the post."
+        "content": "Even newer content for the post.",
+        "author": "Mon"
       }
     },
     "Error": {
       "type": "object",
       "properties": {
         "error": {
-          "type": "string"
+          "type": "string",
+          "description": "A single error message"
         },
         "error(s)": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "A list of error messages for validation failures"
         }
       },
       "example": {
