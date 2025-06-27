@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "title": "World",
+        "content": "Hello",
+        "author": "Mon",
+        "date": "2025-06-27T18:13:03.200729"
+    },
+    {
+        "id": 3,
+        "title": "Testing search",
+        "content": "I love python",
+        "author": "Ed",
+        "date": "Fri, 27 Jun 2025 16:12:11 GMT"
+    },
+    {
+        "author": "Douds",
+        "content": "This is a test.",
+        "title": "Testing something",
+        "id": 4,
+        "date": "2025-06-27T18:12:19.205653"
+    }
+]

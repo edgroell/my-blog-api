@@ -1,3 +1,5 @@
+import os
+import json
 from datetime import datetime
 
 from flask import Flask, jsonify, request, Response
@@ -18,13 +20,74 @@ swagger_ui_blueprint = get_swaggerui_blueprint(
 )
 app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
-GMT_DATE_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
+POSTS_FILE = 'posts.json'
 
-POSTS = [
-    {"id": 1, "title": "First post", "content": "This is the first post.", "author": "Ed", "date": datetime.strptime("Fri, 26 Jun 2025 16:10:09 GMT", GMT_DATE_FORMAT)},
-    {"id": 2, "title": "Second post", "content": "This is the second post.", "author": "Ed", "date": datetime.strptime("Fri, 27 Jun 2025 16:11:38 GMT", GMT_DATE_FORMAT)},
-    {"id": 3, "title": "Testing search", "content": "I love python", "author": "Ed", "date": datetime.strptime("Fri, 27 Jun 2025 16:12:11 GMT", GMT_DATE_FORMAT)},
-]
+POSTS = []
+
+
+def load_data() -> None:
+    """
+    Loads posts from the posts.json file.
+    Converts date strings to datetime objects.
+    Initializes the file with empty list if it doesn't exist.
+    """
+    global POSTS
+    if not os.path.exists(POSTS_FILE):
+        # If file doesn't exist, create with an empty JSON list
+        print(f"'{POSTS_FILE}' not found. Creating an empty file.")
+        with open(POSTS_FILE, "w", encoding="utf-8") as handle:
+            json.dump([], handle)
+
+        POSTS = []
+
+        return
+
+    try:
+        with open(POSTS_FILE, "r", encoding="utf-8") as handle:
+            posts_data = json.load(handle)
+
+            loaded_posts = []
+            for post in posts_data:
+                if "date" in post and isinstance(post['date'], str):
+                    try:
+                        post["date"] = datetime.fromisoformat(post["date"])
+                    except ValueError as e:
+                        print(
+                            f"Warning: Could not get date '{post['date']}' for post ID {post.get('id')}: {e}. Keeping as string.")
+
+                loaded_posts.append(post)
+
+            POSTS.clear()
+            POSTS.extend(loaded_posts)
+
+        print(f"Successfully loaded {len(POSTS)} posts from '{POSTS_FILE}'.")
+
+    except Exception as e:
+        print(f"An unexpected error occurred while loading posts: {e}. Initializing with empty posts.")
+        POSTS.clear()
+
+
+def save_posts():
+    """
+    Saves the current in-memory POSTS list to the posts.json file.
+    Converts datetime objects to strings.
+    """
+    posts_to_save = []
+
+    for post in POSTS:
+        post_copy = post.copy()
+        if 'date' in post_copy and isinstance(post_copy['date'], datetime):
+            post_copy['date'] = post_copy['date'].isoformat()
+        posts_to_save.append(post_copy)
+
+    try:
+        with open(POSTS_FILE, "w", encoding="utf-8") as handle:
+            json.dump(posts_to_save, handle, indent=4)
+
+        print(f"Successfully saved {len(POSTS)} posts to '{POSTS_FILE}'.")
+
+    except Exception as e:
+        print(f"Error saving posts to '{POSTS_FILE}': {e}")
 
 
 def validate_new_post_data(new_post: dict) -> tuple[bool, list]:
@@ -70,7 +133,7 @@ def validate_update_post_data(new_data: dict) -> tuple[bool, list]:
         errors.append("Field 'title' is empty.")
     if "content" in new_data and not new_data["content"]:
         errors.append("Field 'content' is empty.")
-    if "author" not in new_data or not new_data["author"]:
+    if "author" in new_data and not new_data["author"]:
         errors.append("Field 'author' is missing or empty.")
 
     if errors:
@@ -147,9 +210,9 @@ def search_posts_data(search_title: str = None,
             match = True
 
         if match:
-            search_results.add(tuple(post.items()))
+            search_results.add(post["id"])
 
-    return [dict(item) for item in search_results]
+    return [post for post in POSTS if post["id"] in search_results]
 
 
 @app.route('/api/posts', methods=['GET', 'POST'])
@@ -176,7 +239,7 @@ def get_posts() -> tuple[Response, int]:
             return jsonify({"error(s)": errors}), 400
 
         # Generate new ID for the new post
-        new_id = max(post['id'] for post in POSTS) + 1
+        new_id = max(post['id'] for post in POSTS) + 1 if POSTS else 1
         new_post['id'] = new_id
 
         # Generate data field date
@@ -184,6 +247,7 @@ def get_posts() -> tuple[Response, int]:
 
         # Add new post
         POSTS.append(new_post)
+        save_posts()
 
         return jsonify(new_post), 201
 
@@ -204,10 +268,16 @@ def get_posts() -> tuple[Response, int]:
 
             sorting = (direction == "desc")
 
-            if sort_by == 'date':
-                sorted_posts = sorted(POSTS, key=lambda post: post.get(sort_by), reverse=sorting)
-            else:
-                sorted_posts = sorted(POSTS, key=lambda post: post.get(sort_by, ''), reverse=sorting)
+            try:
+                sorted_posts = sorted(
+                    POSTS,
+                    key=lambda post: post.get(sort_by, '') if sort_by != 'date' else post.get(sort_by),
+                    reverse=sorting
+                )
+            except TypeError as e:
+                print(f"Sorting error: {e}")
+                return jsonify(
+                    {"error": f"Error during sorting."}), 500
 
             return jsonify(sorted_posts), 200
 
@@ -247,9 +317,10 @@ def handle_single_post(id: int) -> tuple[Response, int] | None:
 
 def delete_post(id: int, post: dict) -> tuple[Response, int] | None:
     """ Deletes a post from the POSTS list """
+    global POSTS
     # Delete post
     POSTS.remove(post)
-
+    save_posts()
     # Return the deleted post
     return jsonify({"message": f"Post with id {id} has been deleted successfully."}), 200
 
@@ -272,7 +343,7 @@ def update_post(post: dict) -> tuple[Response, int] | None:
 
     # Update post
     post.update(new_data)
-
+    save_posts()
     # Return the updated post
     return jsonify(post), 200
 
@@ -291,4 +362,5 @@ def search_posts() -> tuple[Response, int] | None:
 
 
 if __name__ == '__main__':
+    load_data()
     app.run(host="0.0.0.0", port=5002, debug=True)

@@ -3,27 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog Posts</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <title>My Blog API Client</title>
+    <!-- Link to the external stylesheet -->
     <link rel="stylesheet" href="static/styles.css">
+    <!-- Using Poppins font as per style.css -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>📚 Blog Posts</h1>
-        <div class="input-field">
-            <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5002/api">
-            <button onclick="loadPosts()">Load Posts</button>
+        <h1>My Blog API Client</h1>
+
+        <div id="message-box" class="message-box"></div>
+
+        <div class="input-field-group">
+            <label for="api-base-url" class="form-label">API Base URL:</label>
+            <input type="text" id="api-base-url" value="http://localhost:5002/api" placeholder="e.g., http://localhost:5002/api">
+            <button onclick="loadPosts()" class="btn-primary">Load Posts</button>
         </div>
-        <div class="input-field">
-            <input type="text" id="post-title" placeholder="Enter Post Title">
-            <input type="text" id="post-content" placeholder="Enter Post Content">
-            <button onclick="addPost()">Add Post</button>
+
+        <h2>Add New Post</h2>
+        <div class="form-row">
+            <div>
+                <label for="post-title" class="form-label">Title:</label>
+                <input type="text" id="post-title" placeholder="Enter post title">
+            </div>
+            <div>
+                <label for="post-author" class="form-label">Author:</label>
+                <input type="text" id="post-author" placeholder="Enter author name">
+            </div>
         </div>
+        <div class="form-row">
+            <div>
+                <label for="post-content" class="form-label">Content:</label>
+                <textarea id="post-content" rows="4" placeholder="Enter post content"></textarea>
+            </div>
+        </div>
+        <button onclick="addPost()" class="btn-primary" style="width: 100%; margin-bottom: 20px;">Add Post</button>
+
+        <h2>Sort Posts</h2>
+        <div class="form-row">
+            <div>
+                <label for="sort-by" class="form-label">Sort By:</label>
+                <select id="sort-by">
+                    <option value="">None</option>
+                    <option value="id">ID</option>
+                    <option value="title">Title</option>
+                    <option value="content">Content</option>
+                    <option value="author">Author</option>
+                    <option value="date">Date</option>
+                </select>
+            </div>
+            <div>
+                <label for="sort-direction" class="form-label">Direction:</label>
+                <select id="sort-direction">
+                    <option value="">None</option>
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="applySort()" class="btn-secondary" style="width: 100%; margin-bottom: 20px;">Apply Sort</button>
+
+        <h2>Search Posts</h2>
+        <div class="form-row">
+            <div>
+                <label for="search-title" class="form-label">Title:</label>
+                <input type="text" id="search-title" placeholder="Search by title">
+            </div>
+            <div>
+                <label for="search-content" class="form-label">Content:</label>
+                <input type="text" id="search-content" placeholder="Search by content">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="search-author" class="form-label">Author:</label>
+                <input type="text" id="search-author" placeholder="Search by author">
+            </div>
+            <div>
+                <label for="search-date" class="form-label">Date (YYYY-MM-DD):</label>
+                <input type="text" id="search-date" placeholder="e.g., 2025-06-27">
+            </div>
+        </div>
+        <button onclick="performSearch()" class="btn-secondary" style="width: 100%; margin-bottom: 20px;">Search Posts</button>
+        <button onclick="clearSearchAndReload()" class="btn-secondary" style="width: 100%;">Clear Search & Reload All</button>
+
+        <h2>Posts</h2>
         <div id="post-container">
-            <!-- Blog posts will be inserted here by JavaScript -->
+            <!-- Posts will be loaded here -->
+            <p class="text-gray-500 text-center">No posts loaded yet. Enter API URL and click 'Load Posts'.</p>
         </div>
     </div>
 
-    <script src="static/main.js"></script>
+    <script src="/static/main.js"></script>
 </body>
 </html>
