@@ -98,7 +98,25 @@ def get_posts():
 
     else:
         # Handle the GET request
-        return jsonify(POSTS)
+        sort_by = request.args.get('sort')
+        direction = request.args.get('direction')
+
+        valid_sort_fields = {"title", "content"}
+        valid_direction_fields = {"asc", "desc"}
+
+        if sort_by is not None or direction is not None:
+            if sort_by not in valid_sort_fields or direction not in valid_direction_fields:
+                return jsonify({"error": "Invalid sorting parameters. "
+                                     "Use 'sort' (title, content) and 'direction (asc, desc)"}), 400
+
+            sorting = (direction == "desc")
+            sorted_posts = sorted(POSTS, key=lambda post: post.get(sort_by, ''), reverse=sorting)
+
+            return jsonify(sorted_posts), 200
+
+        else:
+
+            return jsonify(POSTS), 200
 
 
 @app.route('/api/posts/<int:id>', methods=['DELETE', 'PUT'])
