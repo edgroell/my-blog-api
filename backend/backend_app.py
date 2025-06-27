@@ -9,23 +9,27 @@ POSTS = [
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
-def validate_post_data(new_post):
-    if (("title" not in new_post or new_post["title"] == "")
-            and ("content" not in new_post or new_post["content"] == "")):
-        return False
-    return True
+
+def validate_post_data(new_post: dict):
+    errors = []
+    if not new_post:
+        errors.append("Request body cannot be empty.")
+        return False, errors
+
+    if "title" not in new_post or not new_post["title"]:
+        errors.append("Field 'title' is missing or empty.")
+    if "content" not in new_post or not new_post["content"]:
+        errors.append("Field 'content' is missing or empty.")
+
+    if errors:
+        return False, errors
+    return True, []
 
 
-def validate_post_title(new_post):
-    if "title" not in new_post or new_post["title"] == "":
-        return False
-    return True
-
-
-def validate_post_content(new_post):
-    if "content" not in new_post or new_post["content"] == "":
-        return False
-    return True
+def find_post_by_id(id: int):
+    for post in POSTS:
+        if post["id"] == id:
+            return post
 
 
 @app.route('/api/posts', methods=['GET', 'POST'])
@@ -35,14 +39,10 @@ def get_posts():
         new_post = request.get_json()
 
         # Validate new post content
-        if not validate_post_data(new_post):
-            return jsonify({"error": "Fields 'title' and 'content' can't be empty or missing!"}), 400
+        is_valid, errors = validate_post_data(new_post)
 
-        if not validate_post_title(new_post):
-            return jsonify({"error": "Field 'title' can't be empty or missing!"}), 400
-
-        if not validate_post_content(new_post):
-            return jsonify({"error": "Field 'content' can't be empty or missing!"}), 400
+        if not is_valid:
+            return jsonify({"error(s)": errors}), 400
 
         # Generate new ID for the new post
         new_id = max(post['id'] for post in POSTS) + 1
@@ -56,6 +56,22 @@ def get_posts():
     else:
         # Handle the GET request
         return jsonify(POSTS)
+
+
+@app.route('/api/posts/<int:id>', methods=['DELETE'])
+def delete_post(id):
+    # Find the post based on given ID
+    post = find_post_by_id(id)
+
+    # If not found, return 404 error
+    if not post:
+        return jsonify({"error": f"No post with id {id} found."}), 404
+
+    # Delete post
+    POSTS.remove(post)
+
+    # Return the deleted post
+    return jsonify({"message": f"Post with id {id} has been deleted successfully."}), 200
 
 
 if __name__ == '__main__':
