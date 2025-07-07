@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "My Blog API",
+    "title": "My Blogs",
     "version": "1.0.0",
     "description": "A simple API for managing blog posts. Supports CRUD operations, searching, and sorting."
   },
@@ -112,6 +112,40 @@
       }
     },
     "/posts/{id}": {
+      "get": {
+        "summary": "Retrieve a single post by ID",
+        "description": "Returns a specific post identified by its unique ID.",
+        "tags": [
+          "Posts"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the post to retrieve",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "404": {
+            "description": "Post not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "put": {
         "summary": "Update an existing post",
         "description": "Updates a post identified by its ID. Any provided fields (title, content, author) will be updated. The 'date' field is automatically set to the current time on update.",
@@ -254,6 +288,12 @@
               "items": {
                 "$ref": "#/definitions/Post"
               }
+            }
+          },
+          "400": {
+            "description": "Bad Request. No search parameters were provided.",
+            "schema": {
+              "$ref": "#/definitions/Error"
             }
           }
         }

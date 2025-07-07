@@ -1,12 +1,5 @@
 [
     {
-        "id": 1,
-        "title": "World",
-        "content": "Hello",
-        "author": "Mon",
-        "date": "2025-06-27T18:13:03.200729"
-    },
-    {
         "id": 3,
         "title": "Testing search",
         "content": "I love python",
@@ -19,5 +12,12 @@
         "title": "Testing something",
         "id": 4,
         "date": "2025-06-27T18:12:19.205653"
+    },
+    {
+        "id": 5,
+        "date": "2025-07-07T11:46:00.567968",
+        "title": "New Post",
+        "content": "Hello World",
+        "author": "Ed"
     }
 ]
